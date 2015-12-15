@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<style>
+    .button {
+        -moz-appearance: button;
+        /* Firefox */
+        -webkit-appearance: button;
+        /* Safari and Chrome */
+        padding: 10px;
+        margin: 10px;
+        width: 70px;
+    }
+    .drop-box {
+        background: #F8F8F8;
+        border: 5px dashed #DDD;
+        width: 600px;
+        height:300px;
+        text-align: center;
+        padding-top: 25px;
+        margin: 10px;
+    }
+    .dragover {
+        border: 5px dashed blue;
+    }
+</style>
+<head>
+    <title> Welcome </title>
+
+</head>
+<script src="//code.jquery.com/jquery-2.0.3.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.13/angular.js"></script>
+<script src="//angular-ui.github.io/bootstrap/ui-bootstrap-tpls-0.13.0.js"></script>
+<link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
+<script src="//cdn.bootcss.com/danialfarid-angular-file-upload/5.0.9/ng-file-upload-shim.min.js"></script>
+<script src="//cdn.bootcss.com/danialfarid-angular-file-upload/5.0.9/ng-file-upload.min.js"></script>
+<script src="//code.angularjs.org/1.2.20/angular-route.js"></script>
+<script src="//code.angularjs.org/1.2.13/angular-cookies.js"></script>
+<script src="http://bouil.github.io/angular-google-chart/ng-google-chart.js"></script>
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<body>
+<div ng-app="tabLoad" class="container">
+    <h3>Welcome to Earthquake Geo report!!</h3>
+    <div ng-controller="tabCtrl" text-align="center">
+        Drop CSV File to Upload and display the geochart:
+        <div ngf-drop ngf-select ng-model="files" class="drop-box"
+             ngf-drag-over-class="dragover" ngf-multiple="true" ngf-allow-dir="true"
+             accept="image/*,application/pdf">Drop files here or click to upload</div>
+        <div ngf-no-file-drop>File Drag/Drop is not supported for this browser</div>
+        <div ng-show="fileupload">
+            Files:
+            <ul>
+                <li ng-repeat="f in files" style="font-family:smaller">{{f.name}}</li>
+            </ul>
+            Upload Log:
+            <pre>{{log}}</pre>
+        </div>
+        <div ng-show="options">
+            <h4>Select below options</h4>
+            Country:<select ng-model="model.country">
+            <option value="IN">India</option>
+            <option value="US">USA</option>
+            <option value="RU">RUSSIA</option>
+            <option value="CN">CHINA</option>
+            <option value="JP">Japan</option>
+            <option value="DE">Germany</option>
+            <option value="CA">Canada</option>
+            <option value="GB">United Kingdom</option>
+        </select>
+            Magnitude:<select ng-model="model.mag" convert-to-number ng-init="0">
+            <option value="0">Zero</option>
+            <option value="1">one</option>
+            <option value="2">two</option>
+            <option value="3">three</option>
+            <option value="4">four</option>
+            <option value="5">five</option>
+            <option value="6">six</option>
+            <option value="7">seven</option>
+            <option value="8">Eight</option>
+        </select>
+            <button  type="button" class="btn btn-default" ng-click="loadchart(model)"  > Click to load chart! </button>
+        </div>
+        <h3 ng-model="geoheader">{{HEADER}}</h3>
+        <div id="regions_div"></div>
+        <div google-chart chart="geo_chart" ng-show="geoshow"> </div>
+    </div>
+</div>
+<hr>
+
+
+<script>
+    var app = angular.module('tabLoad',['ngFileUpload','googlechart']);
+
+    <!-- Implementing the controller -->
+    app.controller("tabCtrl",function($scope,$http,Upload,$timeout) {
+        $scope.options=false
+        $scope.HEADER=''
+        $scope.fileupload=false
+        $scope.winners = [];
+        $scope.tabvisible = false;
+        var dat=''
+
+        $scope.$watch('files', function () {
+            $scope.upload($scope.files);
+        });
+
+        $scope.upload = function (files) {
+            $scope.fileupload=true
+            if (files && files.length) {
+                for (var i = 0; i < files.length; i++) {
+                    var file = files[i];
+                    Upload.upload({
+                        url: '/csvdata',
+
+                        file: file
+                    }).progress(function (evt) {
+                        var progressPercentage = parseInt(100.0 * evt.loaded / evt.total);
+                        $scope.log = 'progress: ' + progressPercentage + '% ' +
+                        evt.config.file.name + '\n' + $scope.log;
+                    }).success(function (data, status, headers, config) {
+                        $scope.upButton=true
+                        $timeout(function() {
+                            dat=data
+
+                            $scope.log = 'Uploaded Successfuly';
+                            $scope.HEADER="Earthquake report Map for USA";
+                            $scope.options=true;
+                            var geoChart = {};
+                            geoChart.type = "GeoChart";
+                            geoChart.data = data
+                            geoChart.options = {
+                                region: 'US',
+                                width: 3200,
+                                height: 2400,
+                                chartArea: {left:15,top:15,bottom:0,height:"100%"},
+                                colorAxis: {colors: ['#e7711c', '#4374e0']},
+                                displayMode: 'auto',
+                                backgroundColor: "#8FD8D8",
+                                enableRegionInteractivity: "true",
+                                resolution: 'provinces',
+                                magnifyingGlass: {enable: true, zoomFactor: 18},
+                                tooltip: {textStyle: {color: '#FF0000'}, showColorCode: true}
+                            };
+                            geoChart.formatters = {};
+
+                            $scope.geo_chart = geoChart;
+                            $scope.geoshow = true;
+
+                        });
+                    });
+                }
+            }
+        };
+        console.log(google)
+        $scope.loadchart= function(values)
+        {
+            $scope.HEADER="Earthquake report Map for "+ values.country
+            var geoChart = {};
+            geoChart.type = "GeoChart";
+            //geoChart.data = [["Lat","Long","Name","mag"],["33.8351667","-116.9468333","6km N of San Jacinto, California",1.01]];
+            //console.log(values.mag)
+            var result =[]
+            result.push(dat[0])
+            //console.log(values.mag+1)
+            for(var i=1;i<dat.length;i++)
+            {
+
+
+                if(dat[i][3] >= values.mag && dat[i][3] <(values.mag+1))
+                {
+                    console.log("yes")
+                    result.push(dat[i])
+                }
+            }
+            console.log(dat)
+            console.log(result)
+            geoChart.data = result
+
+
+            geoChart.options = {
+                region: values.country,
+                width: 1600,
+                height: 1200,
+                chartArea: {left:15,top:15,bottom:0,height:"100%"},
+                colorAxis: {colors: ['#e7711c', '#4374e0']},
+                displayMode: 'auto',
+                backgroundColor: "#8FD8D8",
+                enableRegionInteractivity: "true",
+                resolution: 'provinces',
+                magnifyingGlass: {enable: true, zoomFactor: 7.5},
+                tooltip: {textStyle: {color: '#FF0000'}, showColorCode: true}
+            };
+            geoChart.formatters = {};
+
+            $scope.geo_chart = geoChart;
+            $scope.geoshow = true;
+        };
+
+        console.log(dat)
+
+    }); <!-- End of controller -->
+</script>
+</body>
+</html>
