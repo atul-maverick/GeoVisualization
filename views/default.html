@@ -35,7 +35,7 @@
 <script src="//cdn.bootcss.com/danialfarid-angular-file-upload/5.0.9/ng-file-upload.min.js"></script>
 <script src="//code.angularjs.org/1.2.20/angular-route.js"></script>
 <script src="//code.angularjs.org/1.2.13/angular-cookies.js"></script>
-<script src="http://bouil.github.io/angular-google-chart/ng-google-chart.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/angular-google-chart/0.1.0/ng-google-chart.js"></script>
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <body>
 <div ng-app="tabLoad" class="container">
@@ -46,6 +46,15 @@
              ngf-drag-over-class="dragover" ngf-multiple="true" ngf-allow-dir="true"
              accept="image/*,application/pdf">Drop files here or click to upload</div>
         <div ngf-no-file-drop>File Drag/Drop is not supported for this browser</div>
+		<div>
+			<h4>Select below option</h4>
+				<select ng-model="time.duration">
+					<option value="month">Month</option>
+					<option value="week">Week</option>
+					<option value="day">Day</option>
+				</select>
+				<button  type="button" class="btn btn-default" ng-click="loadmap(time)"  > Click here!</button>
+		</div>
         <div ng-show="fileupload">
             Files:
             <ul>
@@ -117,6 +126,8 @@
                         $scope.log = 'progress: ' + progressPercentage + '% ' +
                         evt.config.file.name + '\n' + $scope.log;
                     }).success(function (data, status, headers, config) {
+			                  console.log(typeof data);
+							  console.log(data);
                         $scope.upButton=true
                         $timeout(function() {
                             dat=data
@@ -150,7 +161,38 @@
                 }
             }
         };
-        console.log(google)
+        
+		$scope.loadmap=function(values)
+		{	
+			console.log(values);
+			$http.get('/getData/'+values.duration).then(function(response){
+							console.log(response.data);
+							console.log(typeof response);
+							var geoChart = {};
+                            geoChart.type = "GeoChart";
+                            geoChart.data = response.data
+                            geoChart.options = {
+                                region: 'US',
+                                width: 3200,
+                                height: 2400,
+                                chartArea: {left:15,top:15,bottom:0,height:"100%"},
+                                colorAxis: {colors: ['#e7711c', '#4374e0']},
+                                displayMode: 'auto',
+                                backgroundColor: "#8FD8D8",
+                                enableRegionInteractivity: "true",
+                                resolution: 'provinces',
+                                magnifyingGlass: {enable: true, zoomFactor: 18},
+                                tooltip: {textStyle: {color: '#FF0000'}, showColorCode: true}
+                            };
+                            geoChart.formatters = {};
+
+                            $scope.geo_chart = geoChart;
+                            $scope.geoshow = true;
+			
+			});
+		
+		};
+		
         $scope.loadchart= function(values)
         {
             $scope.HEADER="Earthquake report Map for "+ values.country
