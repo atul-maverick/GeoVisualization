@@ -41,13 +41,9 @@
 <div ng-app="tabLoad" class="container">
     <h3>Welcome to Earthquake Geo report!!</h3>
     <div ng-controller="tabCtrl" text-align="center">
-        Drop CSV File to Upload and display the geochart:
-        <div ngf-drop ngf-select ng-model="files" class="drop-box"
-             ngf-drag-over-class="dragover" ngf-multiple="true" ngf-allow-dir="true"
-             accept="image/*,application/pdf">Drop files here or click to upload</div>
-        <div ngf-no-file-drop>File Drag/Drop is not supported for this browser</div>
+        
 		<div>
-			<h4>Select below option</h4>
+			<h4>Select duration in below options</h4>
 				<select ng-model="time.duration">
 					<option value="month">Month</option>
 					<option value="week">Week</option>
@@ -55,14 +51,7 @@
 				</select>
 				<button  type="button" class="btn btn-default" ng-click="loadmap(time)"  > Click here!</button>
 		</div>
-        <div ng-show="fileupload">
-            Files:
-            <ul>
-                <li ng-repeat="f in files" style="font-family:smaller">{{f.name}}</li>
-            </ul>
-            Upload Log:
-            <pre>{{log}}</pre>
-        </div>
+        
         <div ng-show="options">
             <h4>Select below options</h4>
             Country:<select ng-model="model.country">
@@ -88,6 +77,19 @@
         </select>
             <button  type="button" class="btn btn-default" ng-click="loadchart(model)"  > Click to load chart! </button>
         </div>
+       <!--Drop CSV File to Upload and display the geochart:
+        <div ngf-drop ngf-select ng-model="files" class="drop-box"
+             ngf-drag-over-class="dragover" ngf-multiple="true" ngf-allow-dir="true"
+             accept="image/*,application/pdf">Drop files here or click to upload</div>
+        <div ngf-no-file-drop>File Drag/Drop is not supported for this browser</div>
+        <div ng-show="fileupload">
+            Files:
+            <ul>
+                <li ng-repeat="f in files" style="font-family:smaller">{{f.name}}</li>
+            </ul>
+            Upload Log:
+            <pre>{{log}}</pre>
+        </div> -->
         <h3 ng-model="geoheader">{{HEADER}}</h3>
         <div id="regions_div"></div>
         <div google-chart chart="geo_chart" ng-show="geoshow"> </div>
@@ -130,7 +132,7 @@
 							  console.log(data);
                         $scope.upButton=true
                         $timeout(function() {
-                            dat=data
+                            $scope.dat=data
 
                             $scope.log = 'Uploaded Successfuly';
                             $scope.HEADER="Earthquake report Map for USA";
@@ -167,8 +169,9 @@
 			console.log(values);
 			$http.get('/getData/'+values.duration).then(function(response){
 							console.log(response.data);
-							console.log(typeof response);
+							dat=response.data
 							var geoChart = {};
+                             $scope.options=true
                             geoChart.type = "GeoChart";
                             geoChart.data = response.data
                             geoChart.options = {
@@ -199,7 +202,6 @@
             var geoChart = {};
             geoChart.type = "GeoChart";
             //geoChart.data = [["Lat","Long","Name","mag"],["33.8351667","-116.9468333","6km N of San Jacinto, California",1.01]];
-            //console.log(values.mag)
             var result =[]
             result.push(dat[0])
             //console.log(values.mag+1)
@@ -213,7 +215,6 @@
                     result.push(dat[i])
                 }
             }
-            console.log(dat)
             console.log(result)
             geoChart.data = result
 
@@ -237,7 +238,7 @@
             $scope.geoshow = true;
         };
 
-        console.log(dat)
+        
 
     }); <!-- End of controller -->
 </script>
